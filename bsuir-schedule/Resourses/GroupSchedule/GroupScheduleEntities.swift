@@ -24,6 +24,7 @@ struct ScheduleRow: Identifiable {
     let location: String
     let lessonType: String
     let weekNumber: String
+    let photoLink: String
 }
 
 struct WeekSchedule: Identifiable {

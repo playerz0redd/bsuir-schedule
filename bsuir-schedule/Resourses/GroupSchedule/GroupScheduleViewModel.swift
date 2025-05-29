@@ -6,12 +6,14 @@
 //
 
 import Foundation
+import UIKit
 
 class GroupScheduleViewModel: ObservableObject {
     private let model = GroupScheduleModel()
     @Published var group: Int = 351004
     @Published var semesterInfo: SemesterInfo?
     @Published var schedule: [WeekSchedule]?
+    @Published var teacherPhotos: [String: UIImage?] = [:]
     var currentWeek: Int?
     
     /// [day] -> day, [subjects], weekNumber
@@ -46,19 +48,29 @@ class GroupScheduleViewModel: ObservableObject {
         for (day, schedule) in rawSchedule.schedules.allDays {
             var daySchedule: [ScheduleRow] = []
             for item in schedule {
+
                 daySchedule.append(
                     .init(
                         subject: item.subject,
-                        startTime: item.startLessonTime.formatted(),
-                        endTime: item.endLessonTime.formatted(),
+                        startTime: item.startLessonTime.getTime(),
+                        endTime: item.endLessonTime.getTime(),
                         teacher: (item.employees.first?.firstName ?? "")
                                  + " " + (item.employees.first?.lastName ?? ""),
                         subGroup:  item.numSubgroup != 0 ? "subgroup: \(item.numSubgroup)" : "",
                         location: item.auditories.first ?? "",
                         lessonType: item.lessonType,
-                        weekNumber: "\(item.weekNumber)"
+                        weekNumber: "\(item.weekNumber)",
+                        photoLink: item.employees.first != nil ? item.employees.first!.photoLink : ""
                     )
                 )
+                
+                if let teacher = item.employees.first,
+                    self.teacherPhotos[teacher.firstName + " " + teacher.lastName] == nil
+                {
+                    Task {
+                        self.teacherPhotos[teacher.firstName + " " + teacher.lastName] = await fetchTeacherPhoto(from: teacher.photoLink)
+                    }
+                }
             }
             
             weekSchedule.append(.init(
@@ -74,6 +86,17 @@ class GroupScheduleViewModel: ObservableObject {
         } catch {
             print("error")
         }
+    }
+    
+    @MainActor
+    private func fetchTeacherPhoto(from url: String) async -> UIImage? {
+        do {
+            guard let data = try await model.getTeacherPhoto(from: url) else { return nil }
+            return UIImage(data: data)
+        } catch {
+            print("error")
+        }
+        return nil
     }
     
 }

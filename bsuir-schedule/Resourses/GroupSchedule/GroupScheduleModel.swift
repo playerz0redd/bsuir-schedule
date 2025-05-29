@@ -29,4 +29,8 @@ class GroupScheduleModel {
         
         return try decoder.decode(from: data)
     }
+    
+    func getTeacherPhoto(from url: String) async throws(AppError) -> Data? {
+        return try await networkManager.fetchData(url: url, with: .get)
+    }
 }

@@ -21,7 +21,7 @@ class DecodeService {
             for format in formats {
                 formatter.dateFormat = format
                 if let date = formatter.date(from: dateString) {
-                    return Calendar.current.date(byAdding: .hour, value: 2, to: date)!
+                    return date
                 }
             }
             throw AppError.invalidData
